@@ -1,0 +1,42 @@
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+.env/
+.virtualenv/
+
+# TensorFlow/Keras model files
+*.h5
+*.keras
+Models/
+saved_model/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Dataset directories
+datasets/
+
+# Logs and temporary files
+*.log
+*.bak
+*.swp
+*.swo
+
+# Output directories (e.g., training results, temporary outputs)
+output/
+temp/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files (e.g., VSCode, PyCharm)
+.vscode/
+.idea/
+
+# Environment files
+*.env
