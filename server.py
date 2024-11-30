@@ -24,12 +24,12 @@ local_client_batch_size = 32
 def main():
     model = GAN_net()
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    strategy = fl.server.strategy.FedYogi(
+    strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.3,
         fraction_evaluate=0.2,
-        min_fit_clients=2,
-        min_evaluate_clients=2,
-        min_available_clients=2,
+        min_fit_clients=3,
+        min_evaluate_clients=3,
+        min_available_clients=3,
         evaluate_fn=get_evaluate_fn(model),
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
