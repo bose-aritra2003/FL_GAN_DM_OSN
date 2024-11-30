@@ -7,6 +7,7 @@ from keras.layers import (
     Conv2D,
     MaxPooling2D
 )
+from keras.regularizers import l2
 
 
 def GAN_net(in_shape=(64, 64, 3)):
@@ -22,27 +23,27 @@ def GAN_net(in_shape=(64, 64, 3)):
     model = Sequential()
 
     # First Convolutional Block
-    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=in_shape))
+    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=in_shape, kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     # Second Convolutional Block
-    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     # Third Convolutional Block
-    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.01)))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     # Flatten and Fully Connected Layers
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.4))
+    model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(Dropout(0.5))
 
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.3))
+    model.add(Dense(64, activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(Dropout(0.5))
 
     # Output Layer for Binary Classification
     model.add(Dense(1, activation='sigmoid'))
