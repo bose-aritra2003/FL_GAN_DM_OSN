@@ -1,4 +1,3 @@
-# Client Code
 import argparse
 import flwr as fl
 import tensorflow as tf
@@ -9,14 +8,12 @@ from sklearn.utils import shuffle
 from model import GAN_net
 
 # Server address
-server_address = "127.0.0.1:5050"
-# Update to the actual server's IP address in production
+server_address = "127.0.0.1:5050"  # Update for production
 
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
 IMAGE_SIZE = (64, 64)
-
 
 # Define Flower client
 class CifarClient(fl.client.NumPyClient):
@@ -41,15 +38,16 @@ class CifarClient(fl.client.NumPyClient):
             self.training_labels,
             batch_size=batch_size,
             epochs=epochs,
-            validation_split=0.2
+            validation_split=0.2,
+            shuffle=True  # Ensures shuffling for each epoch
         )
         parameters_prime = self.model.get_weights()
         num_examples_train = len(self.training_images)
         results = {
-            "loss": history.history["loss"][0],
-            "accuracy": history.history["accuracy"][0],
-            "val_loss": history.history["val_loss"][0],
-            "val_accuracy": history.history["val_accuracy"][0],
+            "loss": history.history["loss"][-1],
+            "accuracy": history.history["accuracy"][-1],
+            "val_loss": history.history["val_loss"][-1],
+            "val_accuracy": history.history["val_accuracy"][-1],
         }
         return parameters_prime, num_examples_train, results
 
@@ -91,14 +89,15 @@ def main():
 
 
 def load_dataset(client_number):
+    """Load and preprocess the dataset for the client."""
     directory = f"datasets/client{client_number}"
     sub_directories = ["train", "val"]
-    loaded_dataset = []
+    images = []
+    labels = []
+    print(f"Loading dataset from {directory} for client {client_number}...")
 
     for sub_directory in sub_directories:
         path = os.path.join(directory, sub_directory)
-        images, labels = [], []
-        print(f"Loading dataset from {sub_directory} for client {client_number}...")
 
         for folder in os.listdir(path):
             if folder not in class_labels:
@@ -106,7 +105,7 @@ def load_dataset(client_number):
             label = class_labels[folder]
 
             for file in os.listdir(os.path.join(path, folder)):
-                img_path = os.path.join(os.path.join(path, folder), file)
+                img_path = os.path.join(path, folder, file)
                 image = cv2.imread(img_path)
                 if image is None:
                     continue
@@ -114,11 +113,15 @@ def load_dataset(client_number):
                 images.append(image)
                 labels.append(label)
 
-        images = np.array(images, dtype='float32') / 255.0  # Normalize
-        labels = np.array(labels, dtype='int32')
-        loaded_dataset.append((images, labels))
+    images = np.array(images, dtype='float32') / 255.0  # Normalize to [0, 1]
+    labels = np.array(labels, dtype='int32')
 
-    return loaded_dataset
+    # Split the dataset into training and test datasets
+    num_train = int(0.8 * len(images))
+    training_images, test_images = images[:num_train], images[num_train:]
+    training_labels, test_labels = labels[:num_train], labels[num_train:]
+
+    return (training_images, training_labels), (test_images, test_labels)
 
 
 if __name__ == "__main__":
