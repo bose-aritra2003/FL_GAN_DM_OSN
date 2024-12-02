@@ -46,10 +46,10 @@ class CifarClient(fl.client.NumPyClient):
         parameters_prime = self.model.get_weights()
         num_examples_train = len(self.training_images)
         results = {
-            "loss": history.history["loss"][-1],
-            "accuracy": history.history["accuracy"][-1],
-            "val_loss": history.history["val_loss"][-1],
-            "val_accuracy": history.history["val_accuracy"][-1],
+            "loss": history.history["loss"][0],
+            "accuracy": history.history["accuracy"][0],
+            "val_loss": history.history["val_loss"][0],
+            "val_accuracy": history.history["val_accuracy"][0],
         }
         return parameters_prime, num_examples_train, results
 
