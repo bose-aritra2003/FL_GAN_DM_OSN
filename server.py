@@ -18,18 +18,18 @@ IMAGE_SIZE = (64, 64)
 
 # Federated learning configuration
 federatedLearningcounts = 30
-local_client_epochs = 8
+local_client_epochs = 10
 local_client_batch_size = 32
+
 
 def main():
     model = GAN_net()
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    strategy = fl.server.strategy.FedAvg(
-        fraction_fit=0.3,
-        fraction_evaluate=0.2,
-        min_fit_clients=4,
-        min_evaluate_clients=4,
-        min_available_clients=4,
+
+    strategy = WeightedFedAvg(
+        min_fit_clients=3,
+        min_evaluate_clients=3,
+        min_available_clients=3,
         evaluate_fn=get_evaluate_fn(model),
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
@@ -67,10 +67,11 @@ def get_evaluate_fn(model):
     test_images, test_labels = load_dataset()
     print("[Server] Test images shape:", test_images.shape)
     print("[Server] Test labels shape:", test_labels.shape)
+
     def evaluate(
-        server_round: int,
-        parameters: fl.common.NDArrays,
-        config: Dict[str, fl.common.Scalar]
+            server_round: int,
+            parameters: fl.common.NDArrays,
+            config: Dict[str, fl.common.Scalar]
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
         print(f"=== Server round {server_round}/{federatedLearningcounts} ===")
         model.set_weights(parameters)
@@ -89,8 +90,43 @@ def fit_config(server_round: int):
         "local_epochs": local_client_epochs,
     }
 
+
 def evaluate_config(server_round: int):
     return {"val_steps": 4}
+
+
+class WeightedFedAvg(fl.server.strategy.FedAvg):
+    def aggregate_fit(
+            self,
+            server_round: int,
+            results: list[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]],
+            failures: list[BaseException],
+    ) -> Optional[Tuple[fl.common.NDArrays, Dict[str, fl.common.Scalar]]]:
+        if failures:
+            print(f"Round {server_round}: {len(failures)} clients failed.")
+
+        # Weighted aggregation
+        total_weight = 0
+        weighted_updates = None
+
+        for client_proxy, fit_res in results:
+            client_accuracy = fit_res.metrics.get("accuracy", 0.0)
+            client_samples = fit_res.num_examples
+            weight = client_accuracy * client_samples
+
+            if weighted_updates is None:
+                weighted_updates = [w * weight for w in fl.common.parameters_to_ndarrays(fit_res.parameters)]
+            else:
+                weighted_updates = [
+                    wu + w * weight for wu, w in
+                    zip(weighted_updates, fl.common.parameters_to_ndarrays(fit_res.parameters))
+                ]
+
+            total_weight += weight
+
+        aggregated_parameters = [wu / total_weight for wu in weighted_updates]
+        return aggregated_parameters, {}
+
 
 if __name__ == "__main__":
     main()
