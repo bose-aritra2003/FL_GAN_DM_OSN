@@ -13,7 +13,7 @@ server_address = "127.0.0.1:5050"
 # Update to the actual server's IP address in production
 
 # Define classes and image size
-classes = ['real', 'fake']
+classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
 IMAGE_SIZE = (64, 64)
 

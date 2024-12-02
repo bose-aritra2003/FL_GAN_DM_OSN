@@ -12,13 +12,13 @@ server_address = "0.0.0.0:5050"
 # Update to the server's actual IP address in production
 
 # Define classes and image size
-classes = ['real', 'fake']
+classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
 IMAGE_SIZE = (64, 64)
 
 # Federated learning configuration
-federatedLearningcounts = 10
-local_client_epochs = 5
+federatedLearningcounts = 30
+local_client_epochs = 8
 local_client_batch_size = 32
 
 def main():
@@ -27,9 +27,9 @@ def main():
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.3,
         fraction_evaluate=0.2,
-        min_fit_clients=3,
-        min_evaluate_clients=3,
-        min_available_clients=3,
+        min_fit_clients=4,
+        min_evaluate_clients=4,
+        min_available_clients=4,
         evaluate_fn=get_evaluate_fn(model),
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
