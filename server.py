@@ -5,6 +5,8 @@ import tensorflow as tf
 import os
 import cv2
 import numpy as np
+from flwr.server.strategy import FedAvg
+
 from model import GAN_net
 
 # Server address
@@ -26,10 +28,10 @@ def main():
     model = GAN_net()
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-    strategy = WeightedFedAvg(
-        min_fit_clients=3,
-        min_evaluate_clients=3,
-        min_available_clients=3,
+    strategy = FedAvg(
+        min_fit_clients=1,
+        min_evaluate_clients=1,
+        min_available_clients=1,
         evaluate_fn=get_evaluate_fn(model),
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
