@@ -1,96 +1,51 @@
-# Server Code
-from typing import Dict, Optional, Tuple
-import flwr as fl
-import tensorflow as tf
-import os
-import cv2
-import numpy as np
-from model import GAN_net
+from keras.models import Sequential
+from keras.layers import (
+    Dense,
+    Dropout,
+    Flatten,
+    BatchNormalization,
+    Conv2D,
+    MaxPooling2D
+)
+from keras.regularizers import l2
 
-# Server address
-server_address = "0.0.0.0:5050"
-# Update to the server's actual IP address in production
 
-# Define classes and image size
-classes = ['0_real', '1_fake']
-class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (64, 64)
+def GAN_net(in_shape=(64, 64, 3)):
+    """
+    GAN_net: A CNN for binary classification of GAN-generated images.
 
-# Federated learning configuration
-federatedLearningcounts = 30
-local_client_epochs = 8
-local_client_batch_size = 32
+    Args:
+        in_shape (tuple): Input shape of the images (default is 64x64x3 for RGB).
 
-def main():
-    model = GAN_net()
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    strategy = fl.server.strategy.FedAvg(
-        fraction_fit=0.3,
-        fraction_evaluate=0.2,
-        min_fit_clients=4,
-        min_evaluate_clients=4,
-        min_available_clients=4,
-        evaluate_fn=get_evaluate_fn(model),
-        on_fit_config_fn=fit_config,
-        on_evaluate_config_fn=evaluate_config,
-        initial_parameters=fl.common.ndarrays_to_parameters(model.get_weights()),
-    )
-    fl.server.start_server(
-        server_address=server_address,
-        config=fl.server.ServerConfig(num_rounds=federatedLearningcounts),
-        strategy=strategy
-    )
+    Returns:
+        model (Sequential): Compiled Keras Sequential model.
+    """
+    model = Sequential()
 
-def load_dataset():
-    directory = 'datasets/server'
-    sub_directory = "test"
-    path = os.path.join(directory, sub_directory)
-    images, labels = [], []
-    print(f"Loading client dataset from {sub_directory}...")
-    for folder in os.listdir(path):
-        if folder not in class_labels:
-            continue
-        label = class_labels[folder]
-        for file in os.listdir(os.path.join(path, folder)):
-            img_path = os.path.join(os.path.join(path, folder), file)
-            image = cv2.imread(img_path)
-            if image is None:
-                continue
-            image = cv2.resize(image, IMAGE_SIZE)
-            images.append(image)
-            labels.append(label)
-    images = np.array(images, dtype='float32') / 255.0  # Normalize to [0, 1]
-    labels = np.array(labels, dtype='int32')
-    return images, labels
+    # First Convolutional Block
+    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=in_shape, kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
 
-def get_evaluate_fn(model):
-    test_images, test_labels = load_dataset()
-    print("[Server] Test images shape:", test_images.shape)
-    print("[Server] Test labels shape:", test_labels.shape)
-    def evaluate(
-        server_round: int,
-        parameters: fl.common.NDArrays,
-        config: Dict[str, fl.common.Scalar]
-    ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
-        print(f"=== Server round {server_round}/{federatedLearningcounts} ===")
-        model.set_weights(parameters)
-        loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
-        print(f"Round {server_round}: Accuracy = {accuracy}")
-        if server_round == federatedLearningcounts:
-            os.makedirs('Models', exist_ok=True)
-            print("Saving final model...")
-            model.save('Models/gan_net.keras')
-        return loss, {"accuracy": accuracy}
-    return evaluate
+    # Second Convolutional Block
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
 
-def fit_config(server_round: int):
-    return {
-        "batch_size": local_client_batch_size,
-        "local_epochs": local_client_epochs,
-    }
+    # Third Convolutional Block
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
 
-def evaluate_config(server_round: int):
-    return {"val_steps": 4}
+    # Flatten and Fully Connected Layers
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(Dropout(0.5))
 
-if __name__ == "__main__":
-    main()
+    model.add(Dense(64, activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(Dropout(0.5))
+
+    # Output Layer for Binary Classification
+    model.add(Dense(1, activation='sigmoid'))
+
+    return model
