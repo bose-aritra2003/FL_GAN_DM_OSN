@@ -5,15 +5,15 @@ import os
 import numpy as np
 import cv2
 from sklearn.utils import shuffle
-from model import GAN_net
+from modelarch.resnet50 import ResNet50
 
 # Server address
-server_address = "127.0.0.1:5050"  # Update for production
+server_address = "10.24.41.216:5050"  # Update for production
 
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (64, 64)
+IMAGE_SIZE = (256, 256)
 
 # Define Flower client
 class CifarClient(fl.client.NumPyClient):
@@ -78,7 +78,7 @@ def main():
 
     print(f"Client {client_number} has been connected!")
 
-    model = GAN_net()
+    model = ResNet50()
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     (training_images, training_labels), (test_images, test_labels) = load_dataset(client_number)
@@ -120,6 +120,8 @@ def load_dataset(client_number):
     num_train = int(0.8 * len(images))
     training_images, test_images = images[:num_train], images[num_train:]
     training_labels, test_labels = labels[:num_train], labels[num_train:]
+    training_labels = tf.keras.utils.to_categorical(training_labels, num_classes=2)
+    test_labels = tf.keras.utils.to_categorical(test_labels, num_classes=2)
 
     return (training_images, training_labels), (test_images, test_labels)
 
