@@ -4,6 +4,8 @@ import numpy as np
 import flwr as fl
 from typing import Dict, Optional, Tuple
 from model import GAN_net
+import keras
+from modelarch.resnet50 import ResNet50
 
 # Server address
 server_address = "0.0.0.0:5050"
@@ -11,7 +13,7 @@ server_address = "0.0.0.0:5050"
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (64, 64)
+IMAGE_SIZE = (256, 256)
 
 # Federated learning configuration
 federatedLearningcounts = 30
@@ -20,7 +22,7 @@ local_client_batch_size = 32
 
 
 def main():
-    model = GAN_net()
+    model = ResNet50(input_shape=(256, 256, 3), classes=2)
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     # Federated Averaging strategy with additional configurations
@@ -67,8 +69,11 @@ def load_dataset():
             labels.append(label)
 
     # Normalize images to [0, 1]
+    
     images = np.array(images, dtype='float32') / 255.0
     labels = np.array(labels, dtype='int32')
+    labels = keras.utils.to_categorical(labels, num_classes=2)
+
     return images, labels
 
 
