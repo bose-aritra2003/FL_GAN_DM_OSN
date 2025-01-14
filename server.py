@@ -96,11 +96,11 @@ def get_evaluate_fn(model):
         loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
         print(f"Round {server_round}: Accuracy = {accuracy}")
 
-        # Save the model at regular intervals (e.g., after every 10 rounds)
-        if server_round % 10 == 0 or server_round == federatedLearningcounts:
-            os.makedirs('Models', exist_ok=True)
-            print("Saving model...")
-            model.save(f'Models/gan_net_round_{server_round}.keras')
+        # Save the model after each round
+        
+        os.makedirs('Models', exist_ok=True)
+        print("Saving model...")
+        model.save(f'Models/gan_net_round_{server_round}.keras')
 
         return loss, {"accuracy": accuracy}
 
