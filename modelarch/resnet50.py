@@ -193,8 +193,8 @@ def ResNet50(input_shape=(256, 256, 3), classes=2):
     return model
 
 
-# model = ResNet50(input_shape=(64, 64, 3), classes=2)
-# model.compile(
-#     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
-# )
+# model = ResNet50(input_shape=(256, 256, 3), classes=2)
+# # model.compile(
+# #     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+# # )
 # model.summary()

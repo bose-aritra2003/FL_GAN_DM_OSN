@@ -3,9 +3,8 @@ import cv2
 import numpy as np
 import flwr as fl
 from typing import Dict, Optional, Tuple
-from model import GAN_net
-import keras
 from modelarch.resnet50 import ResNet50
+import keras
 
 # Server address
 server_address = "0.0.0.0:5050"
@@ -16,14 +15,14 @@ class_labels = {cls: i for i, cls in enumerate(classes)}
 IMAGE_SIZE = (256, 256)
 
 # Federated learning configuration
-federatedLearningcounts = 30
+federatedLearningcounts = 30  # Adjust this to the total desired number of rounds
 local_client_epochs = 8
 local_client_batch_size = 32
 
 
 def main():
-    model = ResNet50(input_shape=(256, 256, 3), classes=2)
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    # Resume from the last saved model or initialize a new model
+    model = load_last_model_or_initialize()
 
     # Federated Averaging strategy with additional configurations
     strategy = fl.server.strategy.FedAvg(
@@ -44,6 +43,25 @@ def main():
         config=fl.server.ServerConfig(num_rounds=federatedLearningcounts),
         strategy=strategy
     )
+
+
+def load_last_model_or_initialize():
+    """
+    Load the last saved model or initialize a new one
+    """
+    model_dir = 'Models'
+    if not os.path.exists(model_dir) or not os.listdir(model_dir):
+        print("[Server] No saved model found. Initializing a new model...")
+        return ResNet50(input_shape=(256, 256, 3), classes=2)
+
+    # Find the latest model based on round number
+    saved_models = [f for f in os.listdir(model_dir) if f.endswith('.keras')]
+    saved_models.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))  # Sort by round number
+    latest_model_path = os.path.join(model_dir, saved_models[-1])
+    print(f"[Server] Resuming from the latest saved model: {latest_model_path}")
+
+    # Load the model
+    return keras.models.load_model(latest_model_path)
 
 
 def load_dataset():
@@ -69,7 +87,6 @@ def load_dataset():
             labels.append(label)
 
     # Normalize images to [0, 1]
-    
     images = np.array(images, dtype='float32') / 255.0
     labels = np.array(labels, dtype='int32')
     labels = keras.utils.to_categorical(labels, num_classes=2)
@@ -96,11 +113,11 @@ def get_evaluate_fn(model):
         loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
         print(f"Round {server_round}: Accuracy = {accuracy}")
 
-        # Save the model after each round
-        
+        # Save the model after every federated learning round
         os.makedirs('Models', exist_ok=True)
-        print("Saving model...")
-        model.save(f'Models/gan_net_round_{server_round}.keras')
+        model_path = f'Models/gan_net_round_{server_round}.keras'
+        print(f"Saving model to {model_path}...")
+        model.save(model_path)
 
         return loss, {"accuracy": accuracy}
 

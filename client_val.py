@@ -13,7 +13,7 @@ server_address = "10.24.41.216:5050"  # Update for production
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (256, 256)
+IMAGE_SIZE = (64, 64)
 
 # Define Flower client
 class CifarClient(fl.client.NumPyClient):
@@ -33,23 +33,44 @@ class CifarClient(fl.client.NumPyClient):
         self.model.set_weights(parameters)
         batch_size = config["batch_size"]
         epochs = config["local_epochs"]
-        history = self.model.fit(
-            self.training_images,
-            self.training_labels,
-            batch_size=batch_size,
-            epochs=epochs,
-            validation_split=0.2,
-            shuffle=True  # Ensures shuffling for each epoch
-        )
-        parameters_prime = self.model.get_weights()
+
+        best_val_accuracy = -1  # Track the best validation accuracy
+        best_weights = None     # Store the weights corresponding to the best validation accuracy
+        best_results = {}       # Store the results for the best epoch
+
+        for epoch in range(epochs):
+            # Train for one epoch
+            history = self.model.fit(
+                self.training_images,
+                self.training_labels,
+                batch_size=batch_size,
+                epochs=epochs,
+                validation_split=0.2,
+                shuffle=True,
+                verbose=0  # Suppress verbose output for each epoch
+            )
+
+            # Retrieve metrics for the current epoch
+            loss = history.history["loss"][-1]
+            accuracy = history.history["accuracy"][-1]
+            val_loss = history.history["val_loss"][-1]
+            val_accuracy = history.history["val_accuracy"][-1]
+
+            # Check if the current epoch has the best validation accuracy
+            if val_accuracy > best_val_accuracy:
+                best_val_accuracy = val_accuracy
+                best_weights = self.model.get_weights()
+                best_results = {
+                    "loss": loss,
+                    "accuracy": accuracy,
+                    "val_loss": val_loss,
+                    "val_accuracy": val_accuracy,
+                }
+
+        # Use the best weights for reporting results
+        self.model.set_weights(best_weights)
         num_examples_train = len(self.training_images)
-        results = {
-            "loss": history.history["loss"][-1],
-            "accuracy": history.history["accuracy"][-1],
-            "val_loss": history.history["val_loss"][-1],
-            "val_accuracy": history.history["val_accuracy"][-1],
-        }
-        return parameters_prime, num_examples_train, results
+        return best_weights, num_examples_train, best_results
 
     def evaluate(self, parameters, config):
         """Evaluate parameters on the locally held test set."""
@@ -57,6 +78,15 @@ class CifarClient(fl.client.NumPyClient):
         loss, accuracy = self.model.evaluate(self.test_images, self.test_labels)
         num_examples_test = len(self.test_images)
         return loss, num_examples_test, {"accuracy": accuracy}
+
+
+    def evaluate(self, parameters, config):
+        """Evaluate parameters on the locally held test set."""
+        self.model.set_weights(parameters)
+        loss, accuracy = self.model.evaluate(self.test_images, self.test_labels)
+        num_examples_test = len(self.test_images)
+        return loss, num_examples_test, {"accuracy": accuracy}
+
 
 
 def main():
@@ -78,7 +108,7 @@ def main():
 
     print(f"Client {client_number} has been connected!")
 
-    model = ResNet50()
+    model = ResNet50(input_shape=(64,64,3))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     (training_images, training_labels), (test_images, test_labels) = load_dataset(client_number)
