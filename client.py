@@ -1,11 +1,13 @@
 import argparse
 import flwr as fl
+import keras.src.utils
 import tensorflow as tf
 import os
 import numpy as np
 import cv2
 from sklearn.utils import shuffle
 from model import GAN_net
+from modelarch.resnet50 import ResNet50
 
 # Server address
 server_address = "127.0.0.1:5050"  # Update for production
@@ -120,6 +122,8 @@ def load_dataset(client_number):
     num_train = int(0.8 * len(images))
     training_images, test_images = images[:num_train], images[num_train:]
     training_labels, test_labels = labels[:num_train], labels[num_train:]
+    training_labels = keras.src.utils.to_categorical(training_labels, num_classes=2)
+    test_labels = keras.src.utils.to_categorical(test_labels, num_classes=2)
 
     return (training_images, training_labels), (test_images, test_labels)
 

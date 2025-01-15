@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import flwr as fl
 from typing import Dict, Optional, Tuple
-from model import GAN_net
+from modelarch.resnet50 import ResNet50
 
 # Server address
 server_address = "0.0.0.0:5050"
@@ -20,7 +20,7 @@ local_client_batch_size = 32
 
 
 def main():
-    model = GAN_net()
+    model = ResNet50()
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     # Federated Averaging strategy with additional configurations
