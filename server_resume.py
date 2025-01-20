@@ -12,7 +12,7 @@ server_address = "0.0.0.0:5050"
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (256, 256)
+IMAGE_SIZE = (64, 64)
 
 # Federated learning configuration
 federatedLearningcounts = 30  # Adjust this to the total desired number of rounds
@@ -52,7 +52,7 @@ def load_last_model_or_initialize():
     model_dir = 'Models'
     if not os.path.exists(model_dir) or not os.listdir(model_dir):
         print("[Server] No saved model found. Initializing a new model...")
-        return ResNet50(input_shape=(256, 256, 3), classes=2)
+        return ResNet50(input_shape=(64, 64, 3), classes=2)
 
     # Find the latest model based on round number
     saved_models = [f for f in os.listdir(model_dir) if f.endswith('.keras')]

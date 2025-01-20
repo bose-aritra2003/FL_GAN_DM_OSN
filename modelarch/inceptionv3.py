@@ -4,7 +4,7 @@ from keras.models import Model
 from keras.layers.merge import concatenate
 from tensorflow.keras.utils import plot_model
 from keras.layers import Conv2D , MaxPool2D , Input , GlobalAveragePooling2D ,AveragePooling2D, Dense , Dropout ,Activation, Flatten , BatchNormalization
-def InceptionV3(input_shape=(299 , 299 , 3),num_classes=2):
+def InceptionV3(input_shape=(64 , 64, 3),num_classes=2):
     input_layer = Input(shape=input_shape)
     
     x = StemBlock(input_layer)

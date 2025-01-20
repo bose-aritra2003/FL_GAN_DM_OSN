@@ -13,7 +13,7 @@ server_address = "10.24.41.216:5050"  # Update for production
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (256, 256)
+IMAGE_SIZE = (64, 64)
 
 # Define Flower client
 class CifarClient(fl.client.NumPyClient):
@@ -78,7 +78,7 @@ def main():
 
     print(f"Client {client_number} has been connected!")
 
-    model = ResNet50()
+    model = ResNet50(input_shape=(256,256,3))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     (training_images, training_labels), (test_images, test_labels) = load_dataset(client_number)

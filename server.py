@@ -13,7 +13,7 @@ server_address = "0.0.0.0:5050"
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (256, 256)
+IMAGE_SIZE = (64, 64)
 
 # Federated learning configuration
 federatedLearningcounts = 30
@@ -22,7 +22,7 @@ local_client_batch_size = 32
 
 
 def main():
-    model = ResNet50(input_shape=(256, 256, 3), classes=2)
+    model = ResNet50(input_shape=(64, 64, 3), classes=2)
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     # Federated Averaging strategy with additional configurations

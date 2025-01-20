@@ -141,7 +141,7 @@ def convolutional_block(X, f, filters, stage, block, s=2):
     return X
 
 
-def ResNet50(input_shape=(256, 256, 3), classes=2):
+def ResNet50(input_shape=(64, 64, 3), classes=2):
     X_input = Input(input_shape)
     X = ZeroPadding2D((3, 3))(X_input)
 

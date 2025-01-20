@@ -3,7 +3,7 @@ from keras.layers import MaxPool2D, Flatten, Dense
 from keras.models import Model
 # input
 
-def VGG16(input_shape= (224,224,3),classes =2):
+def VGG16(input_shape= (64,64,3),classes =2):
     input = Input(shape =input_shape)
     # 1st Conv Block
 

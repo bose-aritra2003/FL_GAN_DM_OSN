@@ -8,12 +8,12 @@ from sklearn.utils import shuffle
 from modelarch.resnet50 import ResNet50
 
 # Server address
-server_address = "10.24.41.216:5050"  # Update for production
+server_address = "10.24.109.224:5050"  # Update for production
 
 # Define classes and image size
 classes = ['0_real', '1_fake']
 class_labels = {cls: i for i, cls in enumerate(classes)}
-IMAGE_SIZE = (64, 64)
+IMAGE_SIZE = (64,64)
 
 # Define Flower client
 class CifarClient(fl.client.NumPyClient):

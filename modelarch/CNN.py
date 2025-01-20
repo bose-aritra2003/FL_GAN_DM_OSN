@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Conv2D, MaxPooling2D, Input
 
-def GAN_net(in_shape=(64, 64, 1), num_classes=5):
+def GAN_net(in_shape=(64, 64, 3), num_classes=2):
     model = Sequential()
 
     model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=in_shape))

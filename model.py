@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 from keras.regularizers import l2
 
 
-def GAN_net(in_shape=(64, 64, 3)):
+def GAN_net(in_shape=(256, 256, 3)):
     """
     Improved GAN_net: A deeper CNN for binary classification of GAN-generated images.
 
