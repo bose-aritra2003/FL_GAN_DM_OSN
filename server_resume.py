@@ -52,7 +52,7 @@ def load_last_model_or_initialize():
     model_dir = 'Models'
     if not os.path.exists(model_dir) or not os.listdir(model_dir):
         print("[Server] No saved model found. Initializing a new model...")
-        model = Res50(input_shape=(64, 64, 3), classes=2)
+        model = Res50(input_shape=(64, 64, 3), num_classes=2)
     else:
         # Find the latest model based on round number
         saved_models = [f for f in os.listdir(model_dir) if f.endswith('.keras') and '_round_' in f]
