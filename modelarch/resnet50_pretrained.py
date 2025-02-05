@@ -16,23 +16,33 @@ def Res50(input_shape=(64,64,3), num_classes=2):
     model -- a Model() instance in Keras
     """
 
-    # Load the ResNet50 model (pre-trained on ImageNet) without the top layer
-    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
+
+    # Path to the locally downloaded ResNet50 weights file
+    weights_path = './weights/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5' 
+
+    # Load the ResNet50 model (pre-trained on ImageNet) without the top layer, and load weights manually
+    base_model = ResNet50(weights=None, include_top=False, input_shape=(64, 64, 3))
+
+    # Load weights from the file
+    base_model.load_weights(weights_path)
 
     # Freeze the layers of ResNet50
     base_model.trainable = False
 
     # Add custom layers on top of ResNet50
-    x = Flatten()(base_model.output)  # Flatten the feature maps
-    x = Dense(512, activation='relu')(x)  # First Dense layer
-    x = Dropout(0.5)(x)  # Dropout for regularization
-    x = Dense(256, activation='relu')(x)  # Second Dense layer
-    x = Dropout(0.5)(x)  # Dropout to reduce overfitting
-    output = Dense(num_classes, activation='sigmoid')(x)  # Output layer (Binary classification)
+    x = Flatten()(base_model.output)
+    x = Dense(512, activation='relu')(x)
+    x = Dropout(0.5)(x)
+    x = Dense(256, activation='relu')(x)
+    x = Dropout(0.3)(x)
+    output = Dense(num_classes, activation='sigmoid')(x)
 
-    # Create the final model
+        # Create the final model
     model = Model(inputs=base_model.input, outputs=output)
+
+    # Summary of the model
     model.summary()
+
 
     return model
 
