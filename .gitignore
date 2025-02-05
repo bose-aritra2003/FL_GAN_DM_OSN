@@ -2,6 +2,7 @@
 *.pyc
 *.pyo
 __pycache__/
+last_round.txt
 
 # Virtual environment
 venv/
