@@ -23,7 +23,7 @@ def IncV3(input_shape=(64,64,3), num_classes=2):
     x = Dropout(0.5)(x)
     x = Dense(256, activation='relu')(x)
     x = Dropout(0.3)(x)
-    output = Dense(1, activation='sigmoid')(x)  # For binary classification
+    output = Dense(num_classes, activation='sigmoid')(x)  # For binary classification
 
     # Create the final model
     model = Model(inputs=base_model.input, outputs=output)
