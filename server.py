@@ -5,7 +5,7 @@ import flwr as fl
 from typing import Dict, Optional, Tuple
 from model import GAN_net
 import keras
-from modelarch.resnet50 import ResNet50
+from modelarch.resnet50_pretrained import Res50
 
 # Server address
 server_address = "0.0.0.0:5050"
@@ -22,7 +22,7 @@ local_client_batch_size = 32
 
 
 def main():
-    model = ResNet50(input_shape=(64, 64, 3), classes=2)
+    model = Res50(input_shape=(64, 64, 3), classes=2)
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     # Federated Averaging strategy with additional configurations
@@ -100,7 +100,7 @@ def get_evaluate_fn(model):
         
         os.makedirs('Models', exist_ok=True)
         print("Saving model...")
-        model.save(f'Models/gan_net_round_{server_round}.keras')
+        model.save(f'Models/resnet50_pretrained_net_round_{server_round}.keras')
 
         return loss, {"accuracy": accuracy}
 

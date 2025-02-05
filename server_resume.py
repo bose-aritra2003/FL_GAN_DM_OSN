@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import flwr as fl
 from typing import Dict, Optional, Tuple
-from modelarch.resnet50 import ResNet50
+from modelarch.resnet50_pretrained import Res50
 import keras
 
 # Server address
@@ -52,7 +52,7 @@ def load_last_model_or_initialize():
     model_dir = 'Models'
     if not os.path.exists(model_dir) or not os.listdir(model_dir):
         print("[Server] No saved model found. Initializing a new model...")
-        return ResNet50(input_shape=(64, 64, 3), classes=2)
+        return Res50(input_shape=(64, 64, 3), classes=2)
 
     # Find the latest model based on round number
     saved_models = [f for f in os.listdir(model_dir) if f.endswith('.keras')]
