@@ -5,7 +5,8 @@ import os
 import numpy as np
 import cv2
 from sklearn.utils import shuffle
-from modelarch.resnet50 import ResNet50
+from modelarch.resnet50_pretrained import Res50
+
 
 # Server address
 server_address = "10.24.41.216:5050"  # Update for production
@@ -78,7 +79,7 @@ def main():
 
     print(f"Client {client_number} has been connected!")
 
-    model = ResNet50(input_shape=(256,256,3))
+    model = Res50(input_shape=(64,64,3))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     (training_images, training_labels), (test_images, test_labels) = load_dataset(client_number)
