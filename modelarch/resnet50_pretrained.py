@@ -27,7 +27,7 @@ def Res50(input_shape=(64,64,3), num_classes=2):
     x = Dense(512, activation='relu')(x)  # First Dense layer
     x = Dropout(0.5)(x)  # Dropout for regularization
     x = Dense(256, activation='relu')(x)  # Second Dense layer
-    x = Dropout(0.3)(x)  # Dropout to reduce overfitting
+    x = Dropout(0.5)(x)  # Dropout to reduce overfitting
     output = Dense(num_classes, activation='sigmoid')(x)  # Output layer (Binary classification)
 
     # Create the final model
