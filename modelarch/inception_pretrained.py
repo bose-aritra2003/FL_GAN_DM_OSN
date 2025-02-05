@@ -29,10 +29,10 @@ def IncV3(input_shape=(64,64,3), num_classes=2):
     model = Model(inputs=base_model.input, outputs=output)
 
     #   Compile the model
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    # model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     # Print the model summary
-    model.summary()
+    # model.summary()
 
     return model
 
