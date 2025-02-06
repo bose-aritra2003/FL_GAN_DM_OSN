@@ -3,8 +3,7 @@ from keras.applications.resnet import ResNet50
 from keras.models import Model
 from keras.layers import Dense, Flatten, Dropout
 
-
-def Res50(input_shape=(64,64,3), num_classes=2):
+def Res50(input_shape=(64, 64, 3), num_classes=2):
     """
     Function to create a ResNet50 model with custom top layers
 
@@ -16,15 +15,8 @@ def Res50(input_shape=(64,64,3), num_classes=2):
     model -- a Model() instance in Keras
     """
 
-
-    # Path to the locally downloaded ResNet50 weights file
-    weights_path = './weights/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5' 
-
-    # Load the ResNet50 model (pre-trained on ImageNet) without the top layer, and load weights manually
-    base_model = ResNet50(weights=None, include_top=False, input_shape=(64, 64, 3))
-
-    # Load weights from the file
-    base_model.load_weights(weights_path)
+    # Load the ResNet50 model pre-trained on ImageNet without the top layer
+    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
 
     # Freeze the layers of ResNet50
     base_model.trainable = False
@@ -37,16 +29,12 @@ def Res50(input_shape=(64,64,3), num_classes=2):
     x = Dropout(0.3)(x)
     output = Dense(num_classes, activation='sigmoid')(x)
 
-        # Create the final model
+    # Create the final model
     model = Model(inputs=base_model.input, outputs=output)
 
     # Summary of the model
     model.summary()
 
-
     return model
 
-
-
-
-
+Res50()
