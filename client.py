@@ -5,6 +5,7 @@ import os
 import numpy as np
 import cv2
 from sklearn.utils import shuffle
+from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
 from modelarch.resnet50_pretrained import Res50
 
 
@@ -44,33 +45,46 @@ class CifarClient(fl.client.NumPyClient):
         )
         parameters_prime = self.model.get_weights()
         num_examples_train = len(self.training_images)
-        results = {
+
+        return parameters_prime, num_examples_train, {
             "loss": history.history["loss"][-1],
             "accuracy": history.history["accuracy"][-1],
             "val_loss": history.history["val_loss"][-1],
             "val_accuracy": history.history["val_accuracy"][-1],
         }
-        return parameters_prime, num_examples_train, results
 
     def evaluate(self, parameters, config):
         """Evaluate parameters on the locally held test set."""
         self.model.set_weights(parameters)
-        loss, accuracy = self.model.evaluate(self.test_images, self.test_labels)
-        num_examples_test = len(self.test_images)
-        return loss, num_examples_test, {"accuracy": accuracy}
+        predictions = self.model.predict(self.test_images)
+        predicted_classes = np.argmax(predictions, axis=1)
+        true_classes = np.argmax(self.test_labels, axis=1)
 
+        loss, accuracy = self.model.evaluate(self.test_images, self.test_labels, verbose=0)
+        auc = roc_auc_score(true_classes, predictions[:, 1])
+        f1 = f1_score(true_classes, predicted_classes)
+        precision = precision_score(true_classes, predicted_classes)
+        recall = recall_score(true_classes, predicted_classes)
+
+        return loss, len(self.test_images), {
+            "accuracy": accuracy,
+            "auc": auc,
+            "f1_score": f1,
+            "precision": precision,
+            "recall": recall
+        }
 
 def main():
-    client_argumentparser = argparse.ArgumentParser()
-    client_argumentparser.add_argument(
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
         '--client_number',
         dest='client_number',
         type=int,
         required=True,
         help='Used to load the dataset for the client'
     )
-    client_argumentparser = client_argumentparser.parse_args()
-    client_number = client_argumentparser.client_number
+    args = parser.parse_args()
+    client_number = args.client_number
 
     # Validate dataset directory
     dataset_dir = f"datasets/client{client_number}"

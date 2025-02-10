@@ -5,6 +5,7 @@ import flwr as fl
 from typing import Dict, Optional, Tuple, List
 from modelarch.resnet50_pretrained import Res50
 import keras
+from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
 
 # Server address
 server_address = "0.0.0.0:5050"
@@ -32,7 +33,7 @@ def main():
         min_available_clients=3,
         evaluate_fn=get_evaluate_fn(model),
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,  # Added fit_metrics_aggregation_fn
+        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
         initial_parameters=fl.common.ndarrays_to_parameters(model.get_weights()),
@@ -55,8 +56,10 @@ def load_last_model_or_initialize():
         model = Res50(input_shape=(64, 64, 3), num_classes=2)
     else:
         # Find the latest model based on round number
-        saved_models = [f for f in os.listdir(model_dir) if f.endswith('.keras') and '_round_' in f]
-        saved_models.sort(key=lambda x: int(x.split('_round_')[-1].split('.')[0]))  # Sort by round number
+        saved_models = sorted(
+            [f for f in os.listdir(model_dir) if f.endswith('.keras') and '_round_' in f],
+            key=lambda x: int(x.split('_round_')[-1].split('.')[0])
+        )
         latest_model_path = os.path.join(model_dir, saved_models[-1])
         print(f"[Server] Resuming from the latest saved model: {latest_model_path}")
 
@@ -75,7 +78,8 @@ def load_dataset():
     sub_directory = "test"
     path = os.path.join(directory, sub_directory)
     images, labels = [], []
-    print(f"Loading client dataset from {sub_directory}...")
+    print(f"Loading dataset from {sub_directory}...")
+
     for folder in os.listdir(path):
         if folder not in class_labels:
             continue
@@ -91,9 +95,7 @@ def load_dataset():
 
     # Normalize images to [0, 1]
     images = np.array(images, dtype='float32') / 255.0
-    labels = np.array(labels, dtype='int32')
-    labels = keras.utils.to_categorical(labels, num_classes=2)
-
+    labels = keras.utils.to_categorical(np.array(labels, dtype='int32'), num_classes=2)
     return images, labels
 
 def get_evaluate_fn(model):
@@ -104,24 +106,34 @@ def get_evaluate_fn(model):
     print("[Server] Test images shape:", test_images.shape)
     print("[Server] Test labels shape:", test_labels.shape)
 
-    def evaluate(server_round: int, parameters: fl.common.NDArrays, config: Dict[str, fl.common.Scalar]) -> Optional[
-        Tuple[float, Dict[str, fl.common.Scalar]]]:
+    def evaluate(server_round: int, parameters: fl.common.NDArrays, config: Dict[str, fl.common.Scalar]) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
         print(f"=== Server round {server_round}/{federatedLearningcounts} ===")
 
         # Set model weights from federated learning
         model.set_weights(parameters)
 
+        predictions = model.predict(test_images)
+        predicted_classes = np.argmax(predictions, axis=1)
+        true_classes = np.argmax(test_labels, axis=1)
+
         # Evaluate the model on the test dataset
         loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
-        print(f"Round {server_round}: Accuracy = {accuracy}")
+        auc = roc_auc_score(true_classes, predictions[:, 1])
+        f1 = f1_score(true_classes, predicted_classes)
+        precision = precision_score(true_classes, predicted_classes)
+        recall = recall_score(true_classes, predicted_classes)
 
-        # Save the model after every federated learning round
         os.makedirs('Models', exist_ok=True)
-        model_path = f'Models/gan_net_round_{server_round}.keras'
-        print(f"Saving model to {model_path}...")
+        model_path = f'Models/resnet50_pretrained_round_{server_round}.keras'
         model.save(model_path)
 
-        return loss, {"accuracy": accuracy}
+        return loss, {
+            "accuracy": accuracy,
+            "auc": auc,
+            "f1_score": f1,
+            "precision": precision,
+            "recall": recall
+        }
 
     return evaluate
 
